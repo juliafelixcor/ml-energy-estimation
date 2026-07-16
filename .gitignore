@@ -1,0 +1,18 @@
+# Ignorar arquivos temporários do Python
+__pycache__/
+*.pyc
+
+# Ignorar o ambiente virtual
+.venv/
+
+# Ignorar a pasta de datasets baixados (MNIST)
+datasets/MNIST/
+datasets/mnist/
+*.gz
+*.zip
+
+# Ignorar o conteúdo gerado dentro da pasta output
+output/*
+
+# Mas manter a pasta output viva no repositório através do .gitkeep
+!output/.gitkeep
