@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.optim as optim
 
@@ -19,7 +18,6 @@ def run_train(model, train_loader, epochs=5, device="cpu"):
         correct = 0
         total = 0
         
-        # Iterando sobre o dataset real vindo do train_loader
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.to(device)
             
@@ -31,7 +29,6 @@ def run_train(model, train_loader, epochs=5, device="cpu"):
             
             running_loss += loss.item()
             
-            # Cálculo rápido de acurácia para acompanhar o aprendizado
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()

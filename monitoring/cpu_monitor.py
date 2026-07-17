@@ -11,12 +11,10 @@ class CPUMonitor(threading.Thread):
         self.ram_data = []
 
     def run(self):
-        # Primeiro chamado do psutil às vezes retorna 0, então "aquecemos" ele
         psutil.cpu_percent(interval=None)
         
         while not self.stopped.is_set():
             cpu_usage = psutil.cpu_percent(interval=None)
-            # ram_usage em percentual
             ram_usage = psutil.virtual_memory().percent 
             
             self.cpu_data.append(cpu_usage)

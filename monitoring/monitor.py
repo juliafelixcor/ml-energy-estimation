@@ -18,7 +18,6 @@ class SystemMonitor:
         self.cpu_mon.stop()
         self.gpu_mon.stop()
         
-        # Garante que as threads fecharam antes de ler os dados
         self.cpu_mon.join()
         self.gpu_mon.join()
         

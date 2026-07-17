@@ -10,4 +10,4 @@ class Timer:
 
     def stop(self):
         self.end_time = time.perf_counter()
-        return self.end_time - self.start_time # Retorna o tempo em segundos
+        return self.end_time - self.start_time # retorna o tempo em segundos
