@@ -15,6 +15,7 @@ class GPUMonitor(threading.Thread):
         self.gpu_data = []
         self.vram_data = []
         self.power_data = [] # Em Watts
+        self.timestamps = [] # Lista para armazenar os timestamps
         self.has_gpu = False
         self.power_supported = True
 
@@ -40,12 +41,21 @@ class GPUMonitor(threading.Thread):
         else:
             print("[Aviso] Biblioteca 'pynvml' não instalada. Monitoramento de GPU desativado.")
 
+
+
+
     def run(self):
 
         if not self.has_gpu:
-            return
+            return{
+            "avg_gpu_%": None,
+            "avg_vram_%": None,
+            }
+
 
         while not self.stopped.is_set():
+
+            current_time = time.perf_counter() # Obtém o tempo atual em segundos com alta precisão
             try:
                 util = nvmlDeviceGetUtilizationRates(self.handle)
                 gpu_usage = util.gpu
@@ -69,6 +79,7 @@ class GPUMonitor(threading.Thread):
                 except Exception:
                     power = None
 
+            self.timestamps.append(current_time)
             self.gpu_data.append(gpu_usage)
             self.vram_data.append(vram_usage)
 
@@ -86,14 +97,28 @@ class GPUMonitor(threading.Thread):
             except Exception:
                 pass
 
+    def calculate_energy(self):
+        if len(self.power_data) < 2:
+            return None
+
+        energy = 0.0
+
+        for i in range(1, len(self.power_data)):
+
+            dt = self.timestamps[i] - self.timestamps[i - 1]
+
+            energy += self.power_data[i - 1] * dt
+
+        return energy
+
     def get_results(self):
 
         if not self.has_gpu:
             return {
-                "avg_gpu_%": 0.0,
-                "max_gpu_%": 0.0,
-                "avg_vram_%": 0.0,
-                "avg_power_W": None,
+                "avg_gpu_%": None,
+                "max_gpu_%": None,
+                "avg_vram_%": None,
+                "avg_gpu_power_W": None,
                 "gpu_energy_J": None,
                 "power_supported": False,
             }
@@ -104,8 +129,7 @@ class GPUMonitor(threading.Thread):
 
         if self.power_data:
             avg_power = sum(self.power_data) / len(self.power_data)
-            total_time = len(self.power_data) * self.interval
-            gpu_energy = avg_power * total_time
+            gpu_energy = self.calculate_energy()
         else:
             avg_power = None
             gpu_energy = None
@@ -114,7 +138,7 @@ class GPUMonitor(threading.Thread):
             "avg_gpu_%": avg_gpu,
             "max_gpu_%": max_gpu,
             "avg_vram_%": avg_vram,
-            "avg_power_W": avg_power,
+            "avg_gpu_power_W": avg_power,
             "gpu_energy_J": gpu_energy,
             "power_supported": self.power_supported,
         }

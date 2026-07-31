@@ -16,6 +16,7 @@ class CPUMonitor(threading.Thread):
         self.ram_gb_data = []
         self.cpu_power_data = []
         self.ram_power_data = []
+        self.timestamps = []
 
         self.total_ram_gb = total_ram_gb
         self.ram_power_per_gb = ram_power_per_gb
@@ -29,6 +30,9 @@ class CPUMonitor(threading.Thread):
         psutil.cpu_percent(interval=None)
 
         while not self.stopped.is_set():
+
+            # Obtém o tempo atual em segundos com alta precisão
+            current_time = time.perf_counter()
 
             # CPU %
             cpu_usage = psutil.cpu_percent(interval=None)
@@ -65,6 +69,7 @@ class CPUMonitor(threading.Thread):
             )
 
 
+            self.timestamps.append(current_time)
             self.cpu_data.append(cpu_usage)
             self.ram_data.append(ram_usage)
 
@@ -73,7 +78,7 @@ class CPUMonitor(threading.Thread):
             self.cpu_power_data.append(cpu_power)
             self.ram_power_data.append(ram_power)
 
-
+            
             time.sleep(self.interval)
 
 
@@ -81,7 +86,18 @@ class CPUMonitor(threading.Thread):
     def stop(self):
         self.stopped.set()
 
+    def calculate_energy(self, power_samples):
 
+        if len(power_samples) < 2:
+            return None  # Not enough data to calculate energy
+        
+        energy = 0.0
+
+        for i in range(1, len(power_samples)):
+            dt = self.timestamps[i] - self.timestamps[i - 1]
+            energy += power_samples[i - 1] * dt
+        
+        return energy
 
     def get_results(self):
 
@@ -101,29 +117,10 @@ class CPUMonitor(threading.Thread):
             /
             len(self.ram_power_data)
         )
+        
+        cpu_energy = self.calculate_energy(self.cpu_power_data)
 
-
-        # Energia CPU
-        execution_time = (
-            len(self.cpu_power_data)
-            *
-            self.interval
-        )
-
-
-        cpu_energy = (
-            avg_cpu_power
-            *
-            execution_time
-        )
-
-
-        # Energia RAM
-        ram_energy = (
-            avg_ram_power
-            *
-            execution_time
-        )
+        ram_energy = self.calculate_energy(self.ram_power_data)
 
 
         return {
