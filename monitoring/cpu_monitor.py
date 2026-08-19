@@ -163,5 +163,14 @@ class CPUMonitor(threading.Thread):
 
 
             "ram_energy_J":
-                ram_energy
+                ram_energy,
+
+            "energy_estimation_method": "cpu_ram_power_model",
+
+            "cpu_idle_power_W": self.idle_power,
+
+            "cpu_max_power_W": self.max_power,
+
+            "ram_power_per_gb_W": self.ram_power_per_gb,
+
         }
