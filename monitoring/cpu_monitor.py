@@ -2,10 +2,14 @@ import threading
 import time
 import psutil
 
+DEFAULT_RAM_POWER_PER_GB = 0.372
+DEFAULT_CPU_IDLE_POWER_W = 3.0
+DEFAULT_CPU_MAX_POWER_W = 25.0
+
 
 class CPUMonitor(threading.Thread):
 
-    def __init__(self, interval=0.5, total_ram_gb=None, ram_power_per_gb=0.372, idle_power=3, max_power=25):
+    def __init__(self, interval=0.5, total_ram_gb=None, ram_power_per_gb=DEFAULT_RAM_POWER_PER_GB, idle_power=DEFAULT_CPU_IDLE_POWER_W, max_power=DEFAULT_CPU_MAX_POWER_W):
         super().__init__()
 
         self.interval = interval
