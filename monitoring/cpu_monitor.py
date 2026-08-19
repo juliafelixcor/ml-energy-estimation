@@ -5,7 +5,7 @@ import psutil
 
 class CPUMonitor(threading.Thread):
 
-    def __init__(self, interval=0.5, total_ram_gb=19.88, ram_power_per_gb=0.372, idle_power=3, max_power=25):
+    def __init__(self, interval=0.5, total_ram_gb=None, ram_power_per_gb=0.372, idle_power=3, max_power=25):
         super().__init__()
 
         self.interval = interval
@@ -18,7 +18,7 @@ class CPUMonitor(threading.Thread):
         self.ram_power_data = []
         self.timestamps = []
 
-        self.total_ram_gb = total_ram_gb
+        self.total_ram_gb = total_ram_gb or (psutil.virtual_memory().total / (1024 ** 3))
         self.ram_power_per_gb = ram_power_per_gb
 
         self.idle_power = idle_power
