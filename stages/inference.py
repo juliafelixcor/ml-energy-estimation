@@ -25,4 +25,6 @@ def run_inference(model, test_loader, device="cpu"):
             correct += predicted.eq(targets).sum().item()
             
     acc = 100. * correct / total
-    print(f"-> Inferência concluída! Acurácia final no teste: {acc:.2f}%")
+    print(f"-> Inferência concluída! Acurácia final no teste: {acc:.2f}%") 
+    return acc
+

@@ -37,3 +37,6 @@ def run_train(model, train_loader, epochs=5, device="cpu"):
         print(f"   Época {epoch+1}/{epochs} finalizada. Loss Médio: {running_loss/(batch_idx+1):.4f} | Acc: {acc:.2f}%")
     
     print("-> Treinamento concluído!")
+
+    return acc
+
