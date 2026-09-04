@@ -80,7 +80,7 @@ output/inference_metrics_database.csv
 | max_gpu_%        | Maior utilização da GPU (%)                         |
 | avg_vram_%       | Utilização média da memória de vídeo (VRAM) (%)     |
 | avg_power_W      | Potência média da GPU durante a execução (Watts)    |
-| total_energy_J   | Energia total consumida durante a execução (Joules) |
+| gpu_energy_J     | Energia total consumida durante a execução (Joules) |
 | model_name       | Nome do modelo executado                            |
 | stage            | Etapa executada (train ou inference)                |
 | device_used      | Dispositivo utilizado (cpu ou cuda)                 |
