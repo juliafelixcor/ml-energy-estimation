@@ -13,6 +13,10 @@ base de dados para treinar um modelo preditivo (regressão simbólica).
 | 5. Treinar modelo preditivo  | *a fazer, depois da coleta*                       |
 | 6. Analisar e aplicar        | *a fazer*                                         |
 
+`analisar_resultados.py` e `analisar_matriz.py` resumem os experimentos
+anteriores (LeNet5/MNIST), salvos no formato antigo em
+`output/train_metrics_database.csv` e `output/inference_metrics_database.csv`.
+
 ---
 
 # De onde vem a energia medida

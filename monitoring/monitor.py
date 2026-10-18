@@ -76,6 +76,13 @@ class SystemMonitor(threading.Thread):
         # Estimativas (modelo linear) — NÃO são medições
         results["cpu_energy_est_J"] = _integrate(t, ts["cpu_power_est_W"].to_numpy())
         results["ram_energy_est_J"] = _integrate(t, ts["ram_power_est_W"].to_numpy())
+        results["total_energy_est_J"] = results["cpu_energy_est_J"] + results["ram_energy_est_J"]
+        # Parâmetros da estimativa, registrados para reprodutibilidade
+        results["energy_estimation_method"] = "cpu_ram_power_model"
+        results["cpu_idle_power_W"] = self.cpu.idle_power
+        results["cpu_max_power_W"] = self.cpu.max_power
+        results["ram_power_per_gb_W"] = self.cpu.ram_power_per_gb
+        results["monitor_interval_s"] = self.interval
 
         # GPU (medição real, se a placa suportar)
         results["gpu_name"] = self.gpu.gpu_name

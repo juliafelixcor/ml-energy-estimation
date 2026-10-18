@@ -1,6 +1,10 @@
 import os
 import psutil
 
+DEFAULT_RAM_POWER_PER_GB = 0.372
+DEFAULT_CPU_IDLE_POWER_W = 3.0
+DEFAULT_CPU_MAX_POWER_W = 25.0
+
 
 class CPUSensor:
     """
@@ -16,7 +20,8 @@ class CPUSensor:
     name = "cpu"
     available = True
 
-    def __init__(self, idle_power=3, max_power=25, ram_power_per_gb=0.372):
+    def __init__(self, idle_power=DEFAULT_CPU_IDLE_POWER_W, max_power=DEFAULT_CPU_MAX_POWER_W,
+                 ram_power_per_gb=DEFAULT_RAM_POWER_PER_GB):
         self.idle_power = idle_power
         self.max_power = max_power
         self.ram_power_per_gb = ram_power_per_gb

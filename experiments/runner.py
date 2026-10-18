@@ -99,6 +99,7 @@ def run_config(cfg, device, idle, interval=0.5, min_measure_s=60, timeseries_dir
         "host": platform.node(),
         "cpu_name": _cpu_name(),
         "device": device,
+        "seed": seed,
         **{k: cfg[k] for k in CONFIG_KEYS},
         **complexity,
         **workload_features(cfg, complexity, len(train_loader.dataset)),
