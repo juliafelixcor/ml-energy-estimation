@@ -1,28 +1,33 @@
 import torch
 
-def run_inference(model, test_loader, device="cpu"):
+def run_inference(model, test_loader, n_samples=None, device="cpu"):
     """
-    Executa apenas a etapa de predição (forward pass) no conjunto de testes do MNIST.
-    Utiliza dados reais para mapear o consumo de recursos na etapa de produção do modelo.
+    Executa apenas a etapa de predição (forward pass) no conjunto de teste.
+    `n_samples` define a carga de trabalho: o conjunto de teste é percorrido
+    repetidas vezes até processar essa quantidade de amostras (simula um
+    serviço atendendo requisições). Retorna a acurácia (%).
     """
     model = model.to(device)
     model.eval()
-    
+
+    if n_samples is None:
+        n_samples = len(test_loader.dataset)
+
     correct = 0
     total = 0
-    
-    print(f"-> Iniciando inferência no dispositivo: {device.upper()}...")
-    
+
     # torch.no_grad garante que o PyTorch não calculará gradientes (economiza VRAM e CPU/GPU)
     with torch.no_grad():
-        for inputs, targets in test_loader:
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
-            
-            # Cálculo simples de acurácia apenas para fins de monitoramento
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-            
-    acc = 100. * correct / total
-    print(f"-> Inferência concluída! Acurácia final no teste: {acc:.2f}%")
+        while total < n_samples:
+            for inputs, targets in test_loader:
+                inputs, targets = inputs.to(device), targets.to(device)
+                outputs = model(inputs)
+
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+
+                if total >= n_samples:
+                    break
+
+    return 100. * correct / total

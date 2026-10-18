@@ -1,120 +1,76 @@
-import threading
-import time
-
 try:
-    from pynvml import *
+    import pynvml
     PYNVML_AVAILABLE = True
 except ImportError:
     PYNVML_AVAILABLE = False
 
-class GPUMonitor(threading.Thread):
-    def __init__(self, interval=0.5):
-        super().__init__()
-        self.interval = interval
-        self.stopped = threading.Event()
-        self.gpu_data = []
-        self.vram_data = []
-        self.power_data = [] # Em Watts
-        self.has_gpu = False
-        self.power_supported = True
 
-        if PYNVML_AVAILABLE:
-            try:
-                nvmlInit()
+class GPUSensor:
+    """
+    Utilização, VRAM e potência da GPU via NVML.
 
-                self.handle = nvmlDeviceGetHandleByIndex(0)
-                self.has_gpu = True
+    Nem toda GPU expõe potência (ex.: GeForce MX110 retorna "Not Supported").
+    Quando disponível, o contador acumulado de energia (GPUs Volta ou mais novas,
+    como a T4 do Colab/Kaggle) é preferido à integração da potência instantânea.
+    """
 
-                # Verifica se a GPU suporta leitura de potência
-                try:
-                    nvmlDeviceGetPowerUsage(self.handle)
-                except NVMLError_NotSupported:
-                    self.power_supported = False
-                    print("[Aviso] Esta GPU não suporta leitura de potência.")
-                except Exception:
-                    self.power_supported = False
+    name = "gpu"
 
-            except Exception:
-                self.has_gpu = False
-                print("[Aviso] GPU NVIDIA não detectada fisicamente. Monitoramento de GPU desativado.")
-        else:
-            print("[Aviso] Biblioteca 'pynvml' não instalada. Monitoramento de GPU desativado.")
+    def __init__(self, index=0, verbose=True):
+        self.available = False
+        self.power_supported = False
+        self.energy_counter_supported = False
+        self.gpu_name = None
 
-    def run(self):
-
-        if not self.has_gpu:
+        if not PYNVML_AVAILABLE:
+            if verbose:
+                print("[Aviso] Biblioteca 'pynvml' não instalada. Monitoramento de GPU desativado.")
             return
 
-        while not self.stopped.is_set():
+        try:
+            pynvml.nvmlInit()
+            self.handle = pynvml.nvmlDeviceGetHandleByIndex(index)
+            self.gpu_name = pynvml.nvmlDeviceGetName(self.handle)
+            if isinstance(self.gpu_name, bytes):
+                self.gpu_name = self.gpu_name.decode()
+            self.available = True
+        except Exception:
+            if verbose:
+                print("[Aviso] GPU NVIDIA não detectada. Monitoramento de GPU desativado.")
+            return
+
+        try:
+            pynvml.nvmlDeviceGetPowerUsage(self.handle)
+            self.power_supported = True
+        except Exception:
+            if verbose:
+                print(f"[Aviso] A GPU {self.gpu_name} não suporta leitura de potência.")
+
+        try:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+            self.energy_counter_supported = True
+        except Exception:
+            pass
+
+    def energy_counter_J(self):
+        if not self.energy_counter_supported:
+            return None
+        return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle) / 1000.0  # mJ -> J
+
+    def read(self):
+        util = pynvml.nvmlDeviceGetUtilizationRates(self.handle)
+        mem = pynvml.nvmlDeviceGetMemoryInfo(self.handle)
+
+        power = float("nan")
+        if self.power_supported:
             try:
-                util = nvmlDeviceGetUtilizationRates(self.handle)
-                gpu_usage = util.gpu
-            except Exception:
-                gpu_usage = 0
-
-            try:
-                mem = nvmlDeviceGetMemoryInfo(self.handle)
-                vram_usage = (mem.used / mem.total) * 100
-            except Exception:
-                vram_usage = 0
-
-            power = None
-
-            if self.power_supported:
-                try:
-                    power = nvmlDeviceGetPowerUsage(self.handle) / 1000.0
-                except NVMLError_NotSupported:
-                    self.power_supported = False
-                    print("[Aviso] Leitura de potência não suportada por esta GPU.")
-                except Exception:
-                    power = None
-
-            self.gpu_data.append(gpu_usage)
-            self.vram_data.append(vram_usage)
-
-            if power is not None:
-                self.power_data.append(power)
-
-            time.sleep(self.interval)
-
-    def stop(self):
-        self.stopped.set()
-
-        if self.has_gpu and PYNVML_AVAILABLE:
-            try:
-                nvmlShutdown()
+                power = pynvml.nvmlDeviceGetPowerUsage(self.handle) / 1000.0  # mW -> W
             except Exception:
                 pass
 
-    def get_results(self):
-
-        if not self.has_gpu:
-            return {
-                "avg_gpu_%": 0.0,
-                "max_gpu_%": 0.0,
-                "avg_vram_%": 0.0,
-                "avg_power_W": None,
-                "gpu_energy_J": None,
-                "power_supported": False,
-            }
-
-        avg_gpu = sum(self.gpu_data) / len(self.gpu_data) if self.gpu_data else 0.0
-        max_gpu = max(self.gpu_data) if self.gpu_data else 0.0
-        avg_vram = sum(self.vram_data) / len(self.vram_data) if self.vram_data else 0.0
-
-        if self.power_data:
-            avg_power = sum(self.power_data) / len(self.power_data)
-            total_time = len(self.power_data) * self.interval
-            gpu_energy = avg_power * total_time
-        else:
-            avg_power = None
-            gpu_energy = None
-
         return {
-            "avg_gpu_%": avg_gpu,
-            "max_gpu_%": max_gpu,
-            "avg_vram_%": avg_vram,
-            "avg_power_W": avg_power,
-            "gpu_energy_J": gpu_energy,
-            "power_supported": self.power_supported,
+            "gpu_%": util.gpu,
+            "vram_%": 100.0 * mem.used / mem.total,
+            "vram_used_GB": mem.used / (1024 ** 3),
+            "gpu_power_W": power,
         }

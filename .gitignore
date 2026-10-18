@@ -5,9 +5,8 @@ __pycache__/
 # Ignorar o ambiente virtual
 .venv/
 
-# Ignorar a pasta de datasets baixados (MNIST)
-datasets/MNIST/
-datasets/mnist/
+# Ignorar os datasets baixados (MNIST, FashionMNIST, CIFAR-10)
+datasets/*/
 *.gz
 *.zip
 
@@ -16,3 +15,5 @@ output/*
 
 # Mas manter a pasta output viva no repositório através do .gitkeep
 !output/.gitkeep
+
+*.part
